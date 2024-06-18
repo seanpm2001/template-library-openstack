@@ -14,6 +14,7 @@ type openstack_nova_defaults = {
 
     # Resource allocation
     'cpu_allocation_ratio' ? double with SELF > 0
+    'default_schedule_zone' ? string
     'initial_cpu_allocation_ratio' ? double with SELF > 0
     'disk_allocation_ratio' ? double with SELF > 0
     'initial_disk_allocation_ratio' ? double with SELF > 0

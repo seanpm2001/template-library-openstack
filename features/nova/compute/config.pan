@@ -108,7 +108,7 @@ bind '/software/components/metaconfig/services/{/etc/nova/nova.conf}/contents' =
     } else {
         error("OS_NOVA_UPGRADE_LEVELS (%s) must be less or equal to current OpenStack version (%s)",
               OS_NOVA_UPGRADE_LEVELS,
-              OS_VERSION_NAME
+              OPENSTACK_VERSION_NAME,
              );
     };
 } else {

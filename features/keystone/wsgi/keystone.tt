@@ -29,6 +29,12 @@ Listen [% port %]
     <Directory /usr/bin>
         Require all granted
     </Directory>
+
+    [% IF oidc_enabled %]
+    Include conf.d/keystone-oidc.include
+    [%- END %]
+
 </VirtualHost>
+
 
 [%- END -%]

@@ -396,3 +396,21 @@ POLICY_FILES_PATH = "[% policy_files_path %]"
 # Help URL can be made available for the client. To provide a help URL, edit the
 # following attribute to the URL of your choice.
 #HORIZON_CONFIG["help_url"] = "http://openstack.mycompany.org"
+
+[% IF websso.defined %]
+# WEBSSO
+WEBSSO_ENABLED = True
+WEBSSO_CHOICES = (
+    [% FOREACH entry IN websso -%]
+    ('[% entry.provider %]', '[% entry.menu_entry %]'),
+    [%- END %]
+    ('credentials', 'Other accounts'),
+)
+
+WEBSSO_IDP_MAPPING = {
+    [% FOREACH entry IN websso -%]
+    '[% entry.provider %]': ('[% entry.provider %]', 'openid'),
+    [%- END %]
+}
+WEBSSO_INITIAL_CHOICE = 'credentials'
+[%- END %]

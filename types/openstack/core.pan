@@ -28,7 +28,6 @@ type openstack_DEFAULTS = {
     'log_file' ? string
     'my_ip' ? type_ip
     'notifications' ? string
-    'rpc_conn_pool_size' ? long
     'transport_url' : type_hostURI
 };
 
@@ -140,6 +139,7 @@ type openstack_oslo_messaging_rabbit = {
     'rabbit_userid' ? string
     'rabbit_password' ? string
     'rabbit_retry_interval' : long
+    'rpc_conn_pool_size' ? long
 };
 
 @documentation {

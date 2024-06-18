@@ -33,7 +33,6 @@ bind '/software/components/metaconfig/services/{/etc/magnum/magnum.conf}/content
 'contents/DEFAULT/my_ip' = PRIMARY_IP;
 'contents/DEFAULT/log_file' = 'magnum.log';
 'contents/DEFAULT/log_dir' = '/var/log/magnum';
-'contents/DEFAULT/rpc_conn_pool_size' = OS_MAGNUM_RPC_CONN_POOL_SIZE;
 
 # [api] section
 'contents/api/host' = OS_MAGNUM_HOST;

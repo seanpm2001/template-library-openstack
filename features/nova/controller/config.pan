@@ -1,5 +1,15 @@
 unique template features/nova/controller/config;
 
+# Load some useful functions
+include 'defaults/openstack/functions';
+
+# Load Nova-related type definitions
+include 'types/openstack/nova';
+
+# Include general openstack variables and site configuration
+include 'defaults/openstack/config';
+
+
 variable OS_NOVA_SCHEDULER_ENABLED_FILTERS ?= list(
     'AggregateInstanceExtraSpecsFilter',
     'AvailabilityZoneFilter',
@@ -10,14 +20,10 @@ variable OS_NOVA_SCHEDULER_ENABLED_FILTERS ?= list(
     'ServerGroupAffinityFilter',
 );
 
-# Load some useful functions
-include 'defaults/openstack/functions';
+# Default availability zone for instances if none specified
+# Null value keeps the default of any zone
+variable OS_NOVA_DEFAULT_SCHEDULE_ZONE ?= null;
 
-# Load Nova-related type definitions
-include 'types/openstack/nova';
-
-# Include general openstack variables
-include 'defaults/openstack/config';
 
 # Install RPMs for compute part of neutron
 include 'features/nova/controller/rpms';
@@ -44,6 +50,7 @@ bind '/software/components/metaconfig/services/{/etc/nova/nova.conf}/contents' =
 'contents/DEFAULT' = openstack_load_config('features/openstack/base');
 'contents/DEFAULT' = openstack_load_config('features/openstack/logging/' + OS_LOGGING_TYPE);
 'contents/DEFAULT' = openstack_load_ssl_config( OS_NOVA_CONTROLLER_PROTOCOL == 'https' );
+'contents/DEFAULT/default_schedule_zone' = OS_NOVA_DEFAULT_SCHEDULE_ZONE;
 'contents/DEFAULT/cpu_allocation_ratio' = OS_NOVA_CPU_RATIO;
 'contents/DEFAULT/enabled_apis' = list('osapi_compute', 'metadata');
 'contents/DEFAULT/enabled_ssl_apis' = if ( OS_NOVA_CONTROLLER_PROTOCOL == 'https') {

@@ -2,12 +2,13 @@ unique template features/glance/store/ceph;
 
 variable CEPH_CLUSTER_CONFIG ?= error('CEPH_CLUSTER_CONFIG required but undefined');
 variable CEPH_NODE_VERSIONS ?= 'site/ceph/version';
+variable CEPH_CONFIG_FILE ?= 'features/ceph/ceph_conf/config';
 
 include CEPH_NODE_VERSIONS;
 
 include CEPH_CLUSTER_CONFIG;
 
-include 'features/ceph/ceph_conf/config';
+include CEPH_CONFIG_FILE;
 
 # Add ceph package
 '/software/packages' = {

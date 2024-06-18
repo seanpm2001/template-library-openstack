@@ -47,3 +47,17 @@ bind '/software/components/metaconfig/services/{/etc/openstack-dashboard/local_s
 'contents/role' = OS_HORIZON_DEFAULT_ROLE;
 'contents/root_url' = OS_HORIZON_ROOT_URL;
 'contents/secret_key' = OS_HORIZON_SECRET_KEY;
+
+# Configure WEBSSO entries if any defined
+'contents/websso' = if ( is_defined(OS_KEYSTONE_FEDERATION_OIDC_PARAMS) ) {
+    foreach (provider; params; OS_KEYSTONE_FEDERATION_OIDC_PARAMS) {
+        append(
+            dict(
+                'provider', provider,
+                'menu_entry', OS_KEYSTONE_FEDERATION_OIDC_PARAMS[provider]['dashboard_menu'],
+            )
+        );
+    };
+} else {
+    null;
+};

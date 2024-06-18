@@ -36,7 +36,6 @@ bind '/software/components/metaconfig/services/{/etc/barbican/barbican.conf}/con
 'contents/DEFAULT/log_file' = 'barbican-api.log';
 'contents/DEFAULT/host_href' = format('%s://%s:%s', OS_BARBICAN_PROTOCOL, OS_BARBICAN_HOST, OS_BARBICAN_PORT);
 'contents/DEFAULT/log_dir' = '/var/log/barbican';
-'contents/DEFAULT/rpc_conn_pool_size' = 200;
 'contents/DEFAULT/sql_connection' = format('mysql+pymysql://%s:%s@%s/barbican', OS_BARBICAN_DB_USERNAME, OS_BARBICAN_DB_PASSWORD, OS_BARBICAN_DB_HOST);
 
 # [keystone_authtoken] section

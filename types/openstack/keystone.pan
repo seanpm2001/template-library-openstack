@@ -15,6 +15,21 @@ type openstack_keystone_DEFAULTS = {
 };
 
 @documentation {
+    The auth options for the Keystone service
+}
+type openstack_keystone_auth = {
+    'methods' ?  choice('application_credential',
+                        'external',
+                        'mapped',
+                        'oauth1',
+                        'openid',
+                        'password',
+                        'saml2',
+                        'token',
+                        'totp')[]
+};
+
+@documentation {
     The cache options for the Keystone service
 }
 type openstack_keystone_cache = {
@@ -35,7 +50,21 @@ type openstack_keystone_cache = {
 };
 
 @documentation {
-    The fernet toeken options for the Keystone service
+    The credentials options for the Keystone service
+}
+type openstack_keystone_credentials = {
+    'key_repository' ? absolute_file_path
+};
+
+@documentation {
+    The federation options for the Keystone service
+}
+type openstack_keystone_federation = {
+    'trusted_dashboard' : type_hostURI[]
+};
+
+@documentation {
+    The fernet token options for the Keystone service
 }
 type openstack_keystone_fernet_tokens = {
     'key_repository' ? absolute_file_path = '/etc/keystone/fernet-keys'
@@ -68,8 +97,11 @@ type openstack_keystone_token = {
 }
 type openstack_keystone_config = {
     'DEFAULT' : openstack_keystone_DEFAULTS
+    'auth' ? openstack_keystone_auth
     'cache' : openstack_keystone_cache
+    'credentials' ? openstack_keystone_credentials
     'database' : openstack_database
+    'federation' ? openstack_keystone_federation
     'fernet_tokens' : openstack_keystone_fernet_tokens
     'identity' : openstack_keystone_identity
     'memcache' : openstack_keystone_memcache

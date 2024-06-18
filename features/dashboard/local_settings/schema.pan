@@ -22,6 +22,11 @@ type openstack_dashboard_launch_instance_config = {
     'hide_create_volume' : boolean = false
 };
 
+type openstack_dashboard_django_websso_entry = {
+    'provider' : string
+    'menu_entry' : string
+};
+
 type openstack_dashboard_django_config = {
     'allowed_hosts' : type_hostname[]
     'cloud_timezone' : string = "UTC"
@@ -31,4 +36,5 @@ type openstack_dashboard_django_config = {
     'role' : string
     'root_url' : type_URI
     'secret_key' : string
+    'websso' ? openstack_dashboard_django_websso_entry[]
 };
