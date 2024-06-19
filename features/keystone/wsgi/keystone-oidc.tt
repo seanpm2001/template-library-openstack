@@ -1,0 +1,43 @@
+[% FOREACH provider IN oidc.keys -%]
+  OIDCClientID            [% oidc.$provider.ClientID %]
+  OIDCClientSecret        [% oidc.$provider.ClientSecret %]
+  OIDCProviderMetadataURL [% oidc.$provider.ProviderMetadataURL %]
+  OIDCRedirectURI         [% oidc.$provider.RedirectURI %]
+  OIDCCryptoPassphrase    [% oidc.$provider.CryptoPassphrase %]
+  OIDCRemoteUserClaim email
+  OIDCScope "openid email profile"
+
+  <Location /v3/OS-FEDERATION/identity_providers/[% provider %]/protocols/openid/auth>
+    AuthType openid-connect
+    [%- IF oidc.$provider.allowed_claims.defined -%]
+      [%- FOREACH claim IN  oidc.$provider.allowed_claims %]
+    Require claim "groups:[% claim %]"
+      [%- END %]
+    [%- ELSE %]
+    Require valid-user
+    [%- END %]
+  </Location>
+
+  <Location /v3/auth/OS-FEDERATION/websso/openid>
+    AuthType openid-connect
+    [%- IF oidc.$provider.allowed_claims.defined -%]
+      [%- FOREACH claim IN  oidc.$provider.allowed_claims %]
+    Require claim "groups:[% claim %]"
+      [%- END %]
+    [%- ELSE %]
+    Require valid-user
+    [%- END %]
+  </Location>
+
+  <Location /v3/auth/OS-FEDERATION/identity_providers/[% provider %]/protocols/openid/websso>
+    AuthType openid-connect
+    [%- IF oidc.$provider.allowed_claims.defined -%]
+      [%- FOREACH claim IN  oidc.$provider.allowed_claims %]
+    Require claim "groups:[% claim %]"
+      [%- END %]
+    [%- ELSE %]
+    Require valid-user
+    [%- END %]
+  </Location>
+
+[%- END -%]

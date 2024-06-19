@@ -1,78 +1,132 @@
-
 unique template features/keystone/config;
-
-include 'defaults/openstack/schema/schema';
 
 # Load some useful functions
 include 'defaults/openstack/functions';
 
+# Load Keystone-related type definitions
+include 'types/openstack/keystone';
+
 # Include general openstack variables
 include 'defaults/openstack/config';
 
-# Fix list of Openstack user that should not be deleted
-include 'features/accounts/config';
 
-# Include utils
-include 'defaults/openstack/utils';
+@{
+desc = if false disable credential tokens. Use only for transionning from false to true.
+values = boolean
+default = true
+requied = no
+}
+variable OS_KEYSTONE_CREDENTIAL_TOKENS ?= true;
 
-include 'features/keystone/rpms/config';
+@{
+desc = define Fernet token max expected size... With a LDAP backend, longer than the 255 \
+       default. See https://bugs.launchpad.net/keystone/+bug/1926483. 
+values = long
+default = 300
+requied = no
+}
+variable OS_KEYSTONE_TOKEN_MAX_SIZE ?= 300;
 
-# Include some useful configuration
-include 'features/httpd/config';
+@{
+desc = define the list of autentication methods allowed
+values = list of strings (see schema for allowed values) or null for OpenStack default
+default = see below
+requied = no
+}
+variable OS_KEYSTONE_AUTH_METHODS ?= list('application_credential', 'password', 'token');
+
+
+@{
+desc = OIDC parameters
+values = dict
+default = undef
+requied = no
+}
+variable OS_KEYSTONE_FEDERATION_OIDC_PARAMS ?= undef;
+
+
+include 'features/keystone/rpms';
+
+#  httpd configuration
+include 'features/httpd/openstack/config';
+include 'features/keystone/wsgi/config';
+
+# memcache configuration
 include 'features/memcache/config';
 
 # Configuration file for keystone
 include 'components/metaconfig/config';
-
-bind '/software/components/metaconfig/services/{/etc/keystone/keystone.conf}/contents' = openstack_keystone_config;
-
 prefix '/software/components/metaconfig/services/{/etc/keystone/keystone.conf}';
 'module' = 'tiny';
+'convert/joincomma' = true;
+'convert/truefalse' = true;
+'daemons/httpd' = 'restart';
+bind '/software/components/metaconfig/services/{/etc/keystone/keystone.conf}/contents' = openstack_keystone_config;
 
-prefix '/software/components/metaconfig/services/{/etc/keystone/keystone.conf}/contents';
 # [DEFAULT] section
-'DEFAULT/admin_token' ?= OPENSTACK_ADMIN_TOKEN;
-'DEFAULT/notification_driver' = 'messagingv2';
-'DEFAULT' = openstack_load_config('features/openstack/logging/' + OPENSTACK_LOGGING_TYPE);
+'contents/DEFAULT' = openstack_load_config('features/openstack/base');
+'contents/DEFAULT' = openstack_load_config('features/openstack/logging/' + OS_LOGGING_TYPE);
+'contents/DEFAULT' = openstack_load_ssl_config( OS_KEYSTONE_CONTROLLER_PROTOCOL == 'https' );
+'contents/DEFAULT/admin_token' ?= OS_ADMIN_TOKEN;
+# Remove unsupported parameters
+'contents/DEFAULT/auth_strategy' = null;
+'contents/DEFAULT/max_token_size' = if ( is_defined(OS_KEYSTONE_TOKEN_MAX_SIZE) ) {
+    OS_KEYSTONE_TOKEN_MAX_SIZE;
+} else {
+    null;
+};
+
+# [auth] section
+'contents/auth/methods' = {
+    # OS_KEYSTONE_AUTH_METHODS is expected to be a list or to be null
+    methods = OS_KEYSTONE_AUTH_METHODS;
+    if ( is_defined(OS_KEYSTONE_FEDERATION_OIDC_PARAMS) ) {
+        methods[length(methods)] = 'openid';
+    };
+
+    methods;
+};
+
+# [cache] section
+'contents/cache/memcache_servers' = list(OS_MEMCACHE_HOST + ':11211');
+'contents/cache/enabled' = true;
+'contents/cache/backend' = 'oslo_cache.memcache_pool';
+
+# [credentials] section
+'contents/credentials' = if ( OS_KEYSTONE_CREDENTIAL_TOKENS ) {
+    dict('key_repository','/etc/keystone/credentials-keys');
+} else {
+    null;
+};
 
 # [database] section
-'database/connection' = openstack_dict_to_connection_string(OPENSTACK_KEYSTONE_DB);
+'contents/database/connection' = format('mysql+pymysql://%s:%s@%s/keystone', OS_KEYSTONE_DB_USERNAME, OS_KEYSTONE_DB_PASSWORD, OS_KEYSTONE_DB_HOST);
+
+# [federation] section
+'contents/federation' = if ( is_defined(OS_KEYSTONE_FEDERATION_OIDC_PARAMS) && is_defined(OS_HORIZON_PUBLIC_NAMES)) {
+    SELF['trusted_dashboard'] = list();
+    foreach (host; public; OS_HORIZON_PUBLIC_NAMES) {
+        SELF['trusted_dashboard'][length(SELF['trusted_dashboard'])] = format('https://%s%s/auth/websso/', public, OS_HORIZON_ROOT_URL);
+    };
+    SELF;
+} else {
+    null;
+};
+
+# [fernet_tokens] section
+'contents/fernet_tokens/key_repository' = '/etc/keystone/fernet-keys';
 
 # [memcache] section
-'memcache/servers' = openstack_dict_to_hostport_string(OPENSTACK_MEMCACHE_HOSTS);
+'contents/memcache/servers' = list(OS_MEMCACHE_HOST + ':11211');
 
-# [revoke] section
-'revoke/driver' = 'sql';
+# [oslo_messaging_notifications] section
+'contents/oslo_messaging_notifications' = openstack_load_config('features/oslo_messaging/notifications');
+
+#[oslo_messaging_rabbit] section
+'contents/oslo_messaging_rabbit' = openstack_load_config('features/rabbitmq/openstack/client/base');
 
 # [token] section
-'token/provider' = OPENSTACK_KEYSTONE_TOKEN_PROVIDER;
-'token/driver' = OPENSTACK_KEYSTONE_TOKEN_DRIVER;
-
-# [oslo_messaging_rabbit] section
-'DEFAULT' = openstack_load_config('features/rabbitmq/client/openstack');
+'contents/token/provider' = 'fernet';
 
 # Configure identity backend
-include 'features/keystone/identity/' + OPENSTACK_KEYSTONE_IDENTITY_DRIVER;
-
-include 'components/filecopy/config';
-prefix '/software/components/filecopy/services';
-'{/root/init-keystone.sh}' = dict(
-    'perms', '755',
-    'config', format(
-        file_contents('features/keystone/init-keystone.sh'),
-        OPENSTACK_INIT_SCRIPT_GENERAL,
-
-    ),
-    'restart' , '/root/init-keystone.sh',
-);
-
-prefix '/software/components/filecopy/services';
-'{/root/update-keystone-to-queens.sh}' = dict(
-    'perms', '755',
-    'config', format(
-        file_contents('features/keystone/update-keystone-to-queens.sh'),
-        OPENSTACK_INIT_SCRIPT_GENERAL,
-
-    ),
-    'restart' , '/root/update-keystone-to-queens.sh',
-);
+include 'features/keystone/identity/' + OS_KEYSTONE_IDENTITY_DRIVER;
